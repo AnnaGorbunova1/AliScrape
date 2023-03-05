@@ -1,0 +1,5 @@
+httpx
+pandas
+parsel
+bs4
+selenium
