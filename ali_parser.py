@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import os
 from selenium import webdriver
 
+
 def extract_search(response):
     """extract json data from search page"""
     soup = BeautifulSoup(response.text, "html.parser")
@@ -165,28 +166,31 @@ def extract_data_selenium(query):
     )
 
     driver.get("https://www.aliexpress.com/wholesale?"
-                     f"catId=&SearchText={query}&page={page}")
+                     f"SearchText={query}&page={page}")
     time.sleep(5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     # print(soup.prettify())
     # вытаскиваем из страницы список ссылок на товары
     itemslist = soup.find("div", class_="SearchProductFeed_SearchProductFeed__productFeed__tznhm")
-    # создаем датафрейм, куда сложим результаты
-    df = pd.DataFrame(columns=['item', 'skuId', 'skuAttr', 'price'])
-    print(f'found {len(itemslist.div.contents)} items\n')
-    for itl in itemslist.div.contents:
-        itemlink = itl.div.a['href']
-        driver.get("https://aliexpress.ru" + itemlink)
-        time.sleep(3)
-        itemId = itl['data-product-id']
-        print('item ', itemId, '\n')
-        # print(responce.text)
-        # парсим страницу товара
-        df_new = item_list_parser(driver.page_source, itemId)
-        # присоединяем то, что нашли, к нашему общема датафрейму
-        df = pd.concat([df, df_new])
+    # print(itemslist)
+    if itemslist:
+        # создаем датафрейм, куда сложим результаты
+        df = pd.DataFrame(columns=['item', 'skuId', 'skuAttr', 'price'])
+        print(f'found {len(itemslist.div.contents)} items\n')
+        for itl in itemslist.div.contents:
+            itemlink = itl.div.a['href']
+            driver.get("https://aliexpress.ru" + itemlink)
+            time.sleep(3)
+            itemId = itl['data-product-id']
+            print('item ', itemId, '\n')
+            # print(responce.text)
+            # парсим страницу товара
+            df_new = item_list_parser(driver.page_source, itemId)
+            # присоединяем то, что нашли, к нашему общему датафрейму
+            df = pd.concat([df, df_new])
 
-    print(df)
-
+        print(df)
+    else:
+        print('Items not found')
     driver.close()
     driver.quit()
